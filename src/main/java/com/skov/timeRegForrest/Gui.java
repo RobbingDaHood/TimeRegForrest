@@ -1,5 +1,7 @@
 package com.skov.timeRegForrest;
 
+import com.atlassian.jira.rest.client.api.domain.Issue;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -23,8 +25,11 @@ public class Gui extends JPanel implements ActionListener {
     static HashMap<String, Integer> timeRegTimeMap = new HashMap<String, Integer>();
     static HashMap<String, JButton> timeRegNameMap = new HashMap<String, JButton>();
     static HashMap<String, JButton> timeRegSubmittedTimeMap = new HashMap<String, JButton>();
-    static JTextField txtFieldInOffice, txtFieldOutOffice;
+    static JTextField txtFieldInOffice, txtFieldOutOffice, jiraUserName;
+    static JPasswordField jiraPassword;
+    static JButton jiraConnect;
     static JLabel timeInfoLabel;
+    static JTabbedPane tabbedPane;
     static JComboBox popupIntervalComboBox, submitDurationMinutesComboBox;
     static JCheckBox autoMinimizeCheckBox, autoUpdateOfficeOutCheckBox;
     static ArrayList<Integer> shortCutList = new ArrayList<Integer>();
@@ -128,6 +133,54 @@ public class Gui extends JPanel implements ActionListener {
 
         //--
 
+        JPanel jiraUserNamePanel = new JPanel(new GridLayout());
+        jiraUserNamePanel.add(new JLabel("Jira username: "));
+        jiraUserName = new JTextField();
+        jiraUserNamePanel.add(jiraUserName);
+        add(jiraUserNamePanel);
+
+        JPanel jiraPasswordNamePanel = new JPanel(new GridLayout());
+        jiraPasswordNamePanel.add(new JLabel("Jira Password: "));
+        jiraPassword = new JPasswordField();
+        jiraPasswordNamePanel.add(jiraPassword);
+        add(jiraPasswordNamePanel);
+
+        jiraConnect = new JButton("Connect to JIRA");
+        jiraConnect.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JiraConnection jiraConnection = new JiraConnection(jiraUserName.getText(), new String(jiraPassword.getPassword()));
+
+                //Find assigned
+                JiraConnection.SearchListener assignedListener = new JiraConnection.SearchListener() {
+                    public void onSuccess(Iterable<Issue> issues) {
+                        System.out.print("Succes!");
+                        JPanel panel = new JPanel();
+
+                        for (Issue issue : issues) {
+                            addButton(panel, issue.getSummary(), issue.getId().intValue());
+                        }
+
+                        tabbedPane.addTab("Assigned", panel);
+                    }
+
+                    public void onFailure(Throwable throwable) {
+                        System.out.print("FAILED!");
+                    }
+                };
+
+                jiraConnection.searchIssuesAssignedToUser(assignedListener);
+
+
+                //Find static
+
+            }
+        });
+        add(jiraConnect);
+
+        //Setup tab with other user
+
+        //--
+
 
         add(new JLabel(""));
 
@@ -135,25 +188,27 @@ public class Gui extends JPanel implements ActionListener {
         add(timeInfoLabel);
 
 
+        tabbedPane = new JTabbedPane();
+        add(tabbedPane);
 
-        addButton("Daglig forvaltning", 864);
-        addButton("Egen administration", 1005);
-        addButton("Other", 885);
-        addButton("Kanban/Moeder Xportalen", 870);
-        addButton("TK-moeder", 873);
-        addButton("Sagscontainer daglig forv.", 882);
-        addButton("Dokumentation", 881);
-        addButton("Teatching Xportalen", 880);
-        addButton("Testmiljøer", 871);
+//        addButton("Daglig forvaltning", 864);
+//        addButton("Egen administration", 1005);
+//        addButton("Other", 885);
+//        addButton("Kanban/Moeder Xportalen", 870);
+//        addButton("TK-moeder", 873);
+//        addButton("Sagscontainer daglig forv.", 882);
+//        addButton("Dokumentation", 881);
+//        addButton("Teatching Xportalen", 880);
+//        addButton("Testmiljøer", 871);
+//
+//        addButton("ny 1");
+//        addButton("ny 2");
+//        addButton("ny 3");
+//        addButton("ny 4");
+//        addButton("ny 5");
+//        addButton("ny 6");
 
-        addButton("ny 1");
-        addButton("ny 2");
-        addButton("ny 3");
-        addButton("ny 4");
-        addButton("ny 5");
-        addButton("ny 6");
-
-        addButton("Frokost & pauser");
+//        addButton("Frokost & pauser");
 
         add(new JLabel("github.com/tarcom/TimeRegForrest"));
 
@@ -174,7 +229,7 @@ public class Gui extends JPanel implements ActionListener {
         return Integer.valueOf(((String) Gui.submitDurationMinutesComboBox.getSelectedItem()).replace(" minutes", "").trim());
     }
 
-    void addButton(String name, int... jiraNumber) {
+    private static void addButton(JPanel panel, String name, int... jiraNumber) {
 
         JPanel rowPanel = new JPanel(new GridBagLayout());
 
@@ -199,50 +254,50 @@ public class Gui extends JPanel implements ActionListener {
         JTextField jiraLinkField = new JTextField(jiraNumberLink, 5);
         rowPanel.add(jiraLinkField);
 
-        //--
+//        //--
+//
+//        JButton plusButton = new JButton("+");
+//        plusButton.setVerticalTextPosition(AbstractButton.CENTER);
+//        plusButton.setHorizontalTextPosition(AbstractButton.LEADING);
+//        plusButton.setMnemonic(KeyEvent.VK_D);
+//
+//        plusButton.setActionCommand(name + "Plus");
+//        plusButton.setToolTipText("Submit 15 minutes");
+//        plusButton.addActionListener(this);
+//        plusButton.setMnemonic(shortcutKey);
+//
+//        rowPanel.add(plusButton);
+//
+//        timeRegNameMap.put(name, plusButton);
+//
+//        //--
+//
+//        JButton minusButton = new JButton("-");
+//        minusButton.setVerticalTextPosition(AbstractButton.CENTER);
+//        minusButton.setHorizontalTextPosition(AbstractButton.LEADING);
+//        minusButton.setMnemonic(KeyEvent.VK_D);
+//
+//        minusButton.setActionCommand(name + "Minus");
+//        minusButton.setToolTipText("Submit 15 minutes");
+//        minusButton.addActionListener(this);
+//
+//        rowPanel.add(minusButton);
+//
+//        //--
+//
+//        JButton timeSubmittedLabel = new JButton("          ");
+//        timeSubmittedLabel.setToolTipText("Click to open browser and submit time in JIRA " + jiraNumberLink);
+//        timeSubmittedLabel.setActionCommand(jiraNumberLink);
+//        timeSubmittedLabel.setBorderPainted(false);
+//        timeSubmittedLabel.addActionListener(this);
+//        rowPanel.add(timeSubmittedLabel);
+//
+//        timeRegSubmittedTimeMap.put(name, timeSubmittedLabel);
+//        timeRegTimeMap.put(name, 0);
+//
+//        //--
 
-        JButton plusButton = new JButton("+");
-        plusButton.setVerticalTextPosition(AbstractButton.CENTER);
-        plusButton.setHorizontalTextPosition(AbstractButton.LEADING);
-        plusButton.setMnemonic(KeyEvent.VK_D);
-
-        plusButton.setActionCommand(name + "Plus");
-        plusButton.setToolTipText("Submit 15 minutes");
-        plusButton.addActionListener(this);
-        plusButton.setMnemonic(shortcutKey);
-
-        rowPanel.add(plusButton);
-
-        timeRegNameMap.put(name, plusButton);
-
-        //--
-
-        JButton minusButton = new JButton("-");
-        minusButton.setVerticalTextPosition(AbstractButton.CENTER);
-        minusButton.setHorizontalTextPosition(AbstractButton.LEADING);
-        minusButton.setMnemonic(KeyEvent.VK_D);
-
-        minusButton.setActionCommand(name + "Minus");
-        minusButton.setToolTipText("Submit 15 minutes");
-        minusButton.addActionListener(this);
-
-        rowPanel.add(minusButton);
-
-        //--
-
-        JButton timeSubmittedLabel = new JButton("          ");
-        timeSubmittedLabel.setToolTipText("Click to open browser and submit time in JIRA " + jiraNumberLink);
-        timeSubmittedLabel.setActionCommand(jiraNumberLink);
-        timeSubmittedLabel.setBorderPainted(false);
-        timeSubmittedLabel.addActionListener(this);
-        rowPanel.add(timeSubmittedLabel);
-
-        timeRegSubmittedTimeMap.put(name, timeSubmittedLabel);
-        timeRegTimeMap.put(name, 0);
-
-        //--
-
-        add(rowPanel);
+        panel.add(rowPanel);
 
     }
 
